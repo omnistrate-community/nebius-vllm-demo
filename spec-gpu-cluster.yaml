@@ -343,7 +343,7 @@ services:
       instanceTypes:
         - name: 8gpu-128vcpu-1600gb
           cloudProvider: nebius
-          platform: gpu-h100-sxm
+          platform: gpu-h200-sxm
           configurationOverrides:
             GpuClusterID: compute-cluster-id
     network:

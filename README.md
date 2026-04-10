@@ -32,7 +32,7 @@ Both specs are designed to work out of the box as Nebius-hosted plans with:
 ### Compute profile
 
 - Nebius preset: `1gpu-16vcpu-200gb`
-- Platform: `gpu-h100-sxm`
+- Platform: `gpu-h200-sxm`
 - GPU request/limit: `1`
 
 ## `spec-gpu-cluster.yaml`
@@ -42,7 +42,7 @@ Both specs are designed to work out of the box as Nebius-hosted plans with:
 ### Compute profile
 
 - Nebius preset: `8gpu-128vcpu-1600gb`
-- Platform: `gpu-h100-sxm`
+- Platform: `gpu-h200-sxm`
 - `configurationOverrides.GpuClusterID: <INSERT GPU CLUSTER ID>`
 - GPU request/limit: `8`
 - one vLLM replica sized for 8 GPUs
