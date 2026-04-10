@@ -57,8 +57,10 @@ Both files currently ship with these important runtime defaults:
 - served model name: `opt-13b`
 - dtype: `auto`
 - image: `vllm/vllm-openai:latest`
-- chart version: `0.0.4`
+- chart version: `0.0.5`
 - chart repo: `oci://ghcr.io/omnistrate/vllm`
+
+Neither spec sets a `runtimeClassName` by default. That is intentional so the same specs work on Nebius clusters that expose GPUs through the default container runtime and do not publish a `RuntimeClass` object such as `nebius-nvidia`.
 
 ## Observability Included
 

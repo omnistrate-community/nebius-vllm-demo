@@ -357,7 +357,7 @@ services:
         networkingType: PUBLIC
     helmChartConfiguration:
       chartName: chart-vllm
-      chartVersion: 0.0.4
+      chartVersion: 0.0.5
       chartRepoName: omnistrate-vllm
       chartRepoURL: oci://ghcr.io/omnistrate/vllm
       chartValues:
@@ -373,7 +373,6 @@ services:
           external-dns.alpha.kubernetes.io/hostname: $sys.network.externalClusterEndpoint
           external-dns.alpha.kubernetes.io/ttl: "60"
         gpuModels: []
-        runtimeClassName: nebius-nvidia
         image:
           repository: vllm/vllm-openai
           tag: latest
@@ -446,7 +445,6 @@ services:
                     app.kubernetes.io/component: gpu-metrics
                 spec:
                   automountServiceAccountToken: false
-                  runtimeClassName: nebius-nvidia
                   nodeSelector:
                     nebius.com/gpu: "true"
                     omnistrate.com/resource: $sys.deployment.resourceID
