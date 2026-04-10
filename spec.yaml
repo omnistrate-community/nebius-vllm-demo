@@ -338,7 +338,6 @@ features:
 services:
   - name: vllm
     compute:
-      replicaCount: 1
       rootVolumeSizeGi: 256
       instanceTypes:
         - name: 1gpu-16vcpu-200gb
