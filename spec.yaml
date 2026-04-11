@@ -338,6 +338,7 @@ features:
 services:
   - name: vllm
     compute:
+      replicaCount: 1
       rootVolumeSizeGi: 256
       instanceTypes:
         - name: 1gpu-16vcpu-200gb
@@ -355,7 +356,7 @@ services:
         networkingType: PUBLIC
     helmChartConfiguration:
       chartName: chart-vllm
-      chartVersion: 0.0.5
+      chartVersion: 0.0.6
       chartRepoName: omnistrate-vllm
       chartRepoURL: oci://ghcr.io/omnistrate/vllm
       chartValues:
@@ -364,6 +365,9 @@ services:
           app.kubernetes.io/component: api
           app.kubernetes.io/instance: vllm
         replicaCount: 1
+        deploymentStrategy:
+          type: Recreate
+        enableServiceLinks: false
         serviceType: LoadBalancer
         containerPort: 8000
         servicePort: 8000
@@ -377,9 +381,17 @@ services:
           command:
             - vllm
             - serve
-            - facebook/opt-13b
+            - Jackrong/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled
+            - --tokenizer
+            - Qwen/Qwen3.5-27B
             - --served-model-name
-            - opt-13b
+            - qwen3.5-27b-claude-4.6-opus-reasoning-distilled
+            - --trust-remote-code
+            - --enable-auto-tool-choice
+            - --tool-call-parser
+            - qwen3_coder
+            - --reasoning-parser
+            - qwen3
             - --host
             - 0.0.0.0
             - --port

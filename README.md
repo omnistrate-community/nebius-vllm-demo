@@ -53,11 +53,12 @@ Both specs are designed to work out of the box as Nebius-hosted plans with:
 
 Both files currently ship with these important runtime defaults:
 
-- model: `facebook/opt-13b`
-- served model name: `opt-13b`
+- model: `Jackrong/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled`
+- tokenizer override: `Qwen/Qwen3.5-27B`
+- served model name: `qwen3.5-27b-claude-4.6-opus-reasoning-distilled`
 - dtype: `auto`
 - image: `vllm/vllm-openai:latest`
-- chart version: `0.0.5`
+- chart version: `0.0.6`
 - chart repo: `oci://ghcr.io/omnistrate/vllm`
 
 Neither spec sets a `runtimeClassName` by default. That is intentional so the same specs work on Nebius clusters that expose GPUs through the default container runtime and do not publish a `RuntimeClass` object such as `nebius-nvidia`.
