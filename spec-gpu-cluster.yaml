@@ -353,12 +353,12 @@ services:
       api:
         host: "$sys.network.externalClusterEndpoint"
         ports:
-          - 8000
+          - 443
         primary: true
         networkingType: PUBLIC
     helmChartConfiguration:
       chartName: chart-vllm
-      chartVersion: 0.0.6
+      chartVersion: 0.0.7
       chartRepoName: omnistrate-vllm
       chartRepoURL: oci://ghcr.io/omnistrate/vllm
       chartValues:
@@ -370,12 +370,15 @@ services:
         deploymentStrategy:
           type: Recreate
         enableServiceLinks: false
-        serviceType: LoadBalancer
+        serviceType: ClusterIP
         containerPort: 8000
-        servicePort: 8000
-        serviceAnnotations:
-          external-dns.alpha.kubernetes.io/hostname: $sys.network.externalClusterEndpoint
-          external-dns.alpha.kubernetes.io/ttl: "60"
+        servicePort: 80
+        ingress:
+          enabled: true
+          className: nginx
+          host: $sys.network.externalClusterEndpoint
+          tls: true
+          tlsSecret: "$sys.deployment.tlsServerCertificateSecretName"
         gpuModels: []
         image:
           repository: vllm/vllm-openai

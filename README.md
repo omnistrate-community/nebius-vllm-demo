@@ -14,7 +14,8 @@ Both specs are designed to work out of the box as Nebius-hosted plans with:
     - GPU inventory, utilization, framebuffer usage, PCIe throughput, thermals, power, and XID errors
 - **Hosted Nebius deployment** via `deployment.hostedDeployment.NebiusTenantId`
 - **External DNS wiring** via `$sys.network.externalClusterEndpoint`
-- **Public inference endpoint** using `endpointConfiguration` plus a `LoadBalancer` Helm service
+- **Public inference endpoint** using `endpointConfiguration` plus an NGINX ingress wired to `$sys.network.externalClusterEndpoint`
+- **Omnistrate-managed TLS** through `$sys.deployment.tlsServerCertificateSecretName`
 - **vLLM OpenAI-compatible API** on port `8000`
 - **Local model storage** on a PVC mounted at `/data`
 
@@ -22,8 +23,8 @@ Both specs are designed to work out of the box as Nebius-hosted plans with:
 
 | File | Use case | GPU shape | Notes |
 | --- | --- | --- | --- |
-| `spec.yaml` | Single-node, non-cluster Nebius GPU deployment | `1 x H100` | Simplest starting point for bringing up vLLM on Nebius |
-| `spec-gpu-cluster.yaml` | Nebius GPU cluster deployment | `8 x H100` | Keeps `GpuClusterID` support and enables vLLM tensor parallelism |
+| `spec.yaml` | Single-node, non-cluster Nebius GPU deployment | `1 x H200` | Simplest starting point for bringing up vLLM on Nebius |
+| `spec-gpu-cluster.yaml` | Nebius GPU cluster deployment | `8 x H200` | Keeps `GpuClusterID` support and enables vLLM tensor parallelism |
 
 ## `spec.yaml`
 
@@ -58,7 +59,7 @@ Both files currently ship with these important runtime defaults:
 - served model name: `qwen3.5-27b-claude-4.6-opus-reasoning-distilled`
 - dtype: `auto`
 - image: `vllm/vllm-openai:latest`
-- chart version: `0.0.6`
+- chart version: `0.0.7`
 - chart repo: `oci://ghcr.io/omnistrate/vllm`
 
 Neither spec sets a `runtimeClassName` by default. That is intentional so the same specs work on Nebius clusters that expose GPUs through the default container runtime and do not publish a `RuntimeClass` object such as `nebius-nvidia`.
