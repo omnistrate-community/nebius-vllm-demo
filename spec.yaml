@@ -2,7 +2,7 @@
 name: Nebius vLLM GPU Inference
 deployment:
   hostedDeployment:
-    NebiusTenantId: "tenant-e00ezh17k22wmwq5f0"
+    NebiusTenantId: "tenant-e00cs44jqcew4hv3xb"
 
 features:
   CUSTOMER:
