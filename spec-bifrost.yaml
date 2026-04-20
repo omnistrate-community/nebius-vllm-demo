@@ -1,0 +1,171 @@
+# yaml-language-server: $schema=https://api.omnistrate.cloud/2022-09-01-00/schema/service-spec-schema.json
+# Based on the upstream Bifrost production-ha values example, adapted for:
+# - Omnistrate-managed ingress hostnames and TLS certificates.
+# - Current chart issues around the bundled Weaviate path (PVC topology and
+#   internal service port mismatch), so Redis is used for the cache backend.
+name: Bifrost AI Gateway
+deployment:
+  hostedDeployment:
+    NebiusTenantId: "tenant-e00cs44jqcew4hv3xb"
+
+features:
+  CUSTOMER:
+    metrics:
+      scrapeTargets:
+        - name: bifrost
+          podSelector:
+            app.kubernetes.io/name: bifrost
+            app.kubernetes.io/component: server
+          endpoint:
+            portNumber: 8080
+            path: /metrics
+            scheme: http
+
+services:
+  - name: bifrost
+    compute:
+      replicaCount: 4
+      rootVolumeSizeGi: 128
+      instanceTypes:
+        - name: 4vcpu-16gb
+          cloudProvider: nebius
+          platform: cpu-e2
+    endpointConfiguration:
+      api:
+        host: "$sys.network.externalClusterEndpoint"
+        ports:
+          - 443
+        primary: true
+        networkingType: PUBLIC
+    helmChartConfiguration:
+      chartName: bifrost
+      chartVersion: 2.1.1
+      chartRepoName: bifrost
+      chartRepoURL: https://maximhq.github.io/bifrost/helm-charts
+      chartValues:
+        fullnameOverride: bifrost
+        image:
+          repository: docker.io/maximhq/bifrost
+          tag: v1.4.11
+        serviceAccount:
+          automount: false
+        service:
+          type: ClusterIP
+          port: 8080
+        replicaCount: 3
+        autoscaling:
+          enabled: true
+          minReplicas: 3
+          maxReplicas: 4
+          targetCPUUtilizationPercentage: 70
+          targetMemoryUtilizationPercentage: 80
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            # Bifrost's exported UI shell serves the root app for unknown paths,
+            # and the root page uses a relative redirect("login"), which causes
+            # client-side redirect loops on arbitrary nested browser URLs.
+            nginx.org/server-snippets: |
+              set $bifrost_needs_login_redirect 0;
+              if ($request_method = GET) { set $bifrost_needs_login_redirect "${bifrost_needs_login_redirect}g"; }
+              if ($http_accept ~* "text/html") { set $bifrost_needs_login_redirect "${bifrost_needs_login_redirect}h"; }
+              if ($uri !~* "^/(login(?:/|$)|workspace(?:/|$)|pprof(?:/|$)|swagger(?:/|$)|api(?:/|$)|v1(?:/|$)|metrics$|health$|ws$|_next(?:/|$)|favicon\\.ico$|favicon\\.png$)$") { set $bifrost_needs_login_redirect "${bifrost_needs_login_redirect}u"; }
+              if ($bifrost_needs_login_redirect = "0ghu") { return 302 /login; }
+          hosts:
+            - host: $sys.network.externalClusterEndpoint
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: "$sys.deployment.tlsServerCertificateSecretName"
+              hosts:
+                - $sys.network.externalClusterEndpoint
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        storage:
+          mode: postgres
+          configStore:
+            enabled: true
+          logsStore:
+            enabled: true
+        postgresql:
+          enabled: true
+          auth:
+            username: bifrost
+            password: \"$sys.deterministicSeedValue\"
+            database: bifrost
+          primary:
+            persistence:
+              enabled: true
+              size: 93Gi
+            resources:
+              limits:
+                cpu: 1000m
+                memory: 2Gi
+              requests:
+                cpu: 500m
+                memory: 1Gi
+        vectorStore:
+          enabled: true
+          type: redis
+          redis:
+            enabled: true
+            auth:
+              enabled: true
+              password: \"$sys.deterministicSeedValue\"
+            master:
+              persistence:
+                enabled: false
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 250m
+                  memory: 256Mi
+        bifrost:
+          encryptionKeySecret: null
+          encryptionKey: \"$sys.deterministicSeedValue\"
+          client:
+            initialPoolSize: 1000
+            enableLogging: true
+            maxRequestBodySizeMb: 100
+          providers: {}
+          plugins:
+            telemetry:
+              enabled: true
+              config: {}
+            logging:
+              enabled: true
+              config: {}
+            semanticCache:
+              enabled: true
+              config:
+                # Use direct-cache mode so the spec stays self-contained and does
+                # not require an extra embedding-provider secret on day one.
+                dimension: 1
+                threshold: 1
+                ttl: "1h"
+                conversation_history_threshold: 5
+                cache_by_model: true
+                cache_by_provider: true
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                      - key: app.kubernetes.io/name
+                        operator: In
+                        values:
+                          - bifrost
+                  topologyKey: kubernetes.io/hostname
